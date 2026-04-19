@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ENT Thesis — Data Entry</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0f2744;--navy-dark:#0a1c30;--navy-light:#1a3a5c;
+  --teal:#0e7490;--teal-light:#e0f2fe;
+  --bg:#f4f6f8;--card:#fff;--border:#dde3ea;--border-dark:#c5cdd8;
+  --text:#1a2433;--muted:#5a6a7e;--faint:#8a9bb0;
+  --green:#15803d;--green-bg:#f0fdf4;--green-border:#86efac;
+  --red:#b91c1c;--red-bg:#fef2f2;--red-border:#fca5a5;
+  --amber:#92400e;--amber-bg:#fffbeb;--amber-border:#fcd34d;
+  --radius:10px;--radius-sm:7px;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.header{background:var(--navy);color:#fff;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.header-title{font-size:15px;font-weight:600}
+.header-sub{font-size:11px;color:#94afc8;margin-top:1px}
+.header-right{display:flex;align-items:center;gap:12px}
+.sync-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.2);color:#94afc8}
+.sync-badge.ok{background:rgba(21,128,61,.25);border-color:#4ade80;color:#86efac}
+.sync-badge.err{background:rgba(185,28,28,.25);border-color:#f87171;color:#fca5a5}
+.sync-badge.loading{background:rgba(14,116,144,.25);border-color:#38bdf8;color:#7dd3fc}
+.help-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:var(--radius-sm);padding:4px 12px;font-size:12px;cursor:pointer}
+.help-btn:hover{background:rgba(255,255,255,.18)}
+.setup-wrap{background:var(--navy-light);border-bottom:1px solid rgba(255,255,255,.08);padding:.85rem 1.5rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.setup-wrap label{font-size:12px;color:#94afc8;white-space:nowrap;font-weight:600}
+.setup-wrap input{flex:1;min-width:300px;font-size:13px;padding:7px 10px;border:1px solid rgba(255,255,255,.2);border-radius:var(--radius-sm);background:rgba(255,255,255,.08);color:#fff;outline:none}
+.setup-wrap input:focus{border-color:#38bdf8}
+.btn-connect{background:var(--teal);color:#fff;border:none;border-radius:var(--radius-sm);padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-connect:hover{background:#0c6580}
+.tab-bar{background:#fff;border-bottom:1px solid var(--border);display:flex;padding:0 1.5rem;position:sticky;top:54px;z-index:99}
+.tab{padding:11px 18px;font-size:13px;font-weight:500;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--navy);border-bottom-color:var(--teal);font-weight:600}
+.tab-badge{display:inline-block;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px;vertical-align:middle}
+.main{padding:1.25rem 1.5rem;max-width:1080px;margin:0 auto}
+.section{display:none}.section.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:.85rem}
+.card-head{padding:.7rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-head h2{font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.07em}
+.card-body{padding:.9rem 1.25rem}
+.grid{display:grid;gap:10px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.g4{grid-template-columns:1fr 1fr 1fr 1fr}
+.g5{grid-template-columns:repeat(5,1fr)}
+.g6{grid-template-columns:repeat(6,1fr)}
+.g7{grid-template-columns:40px 1fr 1fr 60px 60px 1fr 1fr}
+@media(max-width:680px){.g2,.g3,.g4,.g5,.g6,.g7{grid-template-columns:1fr 1fr}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select,.field textarea{font-size:13px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;color:var(--text);outline:none;transition:border .15s,box-shadow .15s;width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(14,116,144,.1)}
+.field input[readonly]{background:#f8fafc;color:var(--faint);cursor:not-allowed}
+.field textarea{resize:vertical;min-height:56px}
+.req{color:#e11d48}
+.yn{display:flex;gap:4px}
+.yn-btn{flex:1;padding:6px 2px;font-size:12px;font-weight:600;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;cursor:pointer;text-align:center;transition:all .12s;color:var(--muted)}
+.yn-btn:hover{border-color:var(--border-dark)}
+.yn-btn.y{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.yn-btn.n{background:#f8fafc;border-color:var(--border-dark);color:var(--text)}
+.ear-cols{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
+.ear-block{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
+.ear-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:5px 10px;text-align:center}
+.ear-title.right{background:#eff6ff;color:#1e40af;border-bottom:2px solid #3b82f6}
+.ear-title.left{background:#f5f3ff;color:#5b21b6;border-bottom:2px solid #7c3aed}
+.ear-inner{padding:10px}
+.tymp-wrap{overflow-x:auto}
+.tymp-table{width:100%;border-collapse:collapse;font-size:13px}
+.tymp-table th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap}
+.tymp-table td{padding:6px 8px;border-bottom:1px solid #f0f2f5;vertical-align:middle}
+.tymp-table tbody tr:last-child td{border-bottom:none}
+.tymp-table tbody tr:hover{background:#fafbfc}
+.ear-label-cell{font-size:11px;font-weight:700;white-space:nowrap;padding:6px 12px;background:#f8fafc;border-right:1px solid var(--border)}
+.ear-label-cell.right{color:#1e40af}
+.ear-label-cell.left{color:#5b21b6}
+.tymp-table input,.tymp-table select{font-size:13px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);outline:none;width:100%;min-width:70px;transition:border .15s}
+.tymp-table input:focus,.tymp-table select:focus{border-color:var(--teal);box-shadow:0 0 0 2px rgba(14,116,144,.1)}
+.tymp-table .type-select{min-width:80px}
+.btn{padding:8px 18px;font-size:13px;font-weight:600;border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;border:1px solid transparent}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-primary:hover{background:var(--navy-dark)}
+.btn-secondary{background:#fff;color:var(--text);border-color:var(--border-dark)}
+.btn-secondary:hover{background:var(--bg)}
+.btn-teal{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn-teal:hover{background:#0c6580}
+.btn-sm{padding:5px 12px;font-size:12px}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.form-err{font-size:12px;color:var(--red);margin-top:6px;display:none}
+.rec-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:.85rem}
+.rec-filters input,.rec-filters select{font-size:13px;padding:6px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;color:var(--text);outline:none}
+.rec-filters input:focus,.rec-filters select:focus{border-color:var(--teal)}
+.rec-list{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
+.rec-row{display:grid;grid-template-columns:36px 1fr auto;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;transition:background .1s}
+.rec-row:last-child{border-bottom:none}
+.rec-row:hover{background:#f8fafc}
+.rec-no{font-size:12px;font-weight:700;color:var(--faint);text-align:center}
+.rec-name{font-weight:600;font-size:13px;color:var(--navy)}
+.rec-meta{font-size:11px;color:var(--muted);margin-top:1px}
+.badges{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.bA{background:#f0fdf4;color:#166534;border:1px solid #86efac}
+.bB{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.bC{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.bAs,.bAd{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}
+.bInc{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.bNa{background:#f8fafc;color:var(--faint);border:1px solid var(--border)}
+.empty{padding:2.5rem;text-align:center;color:var(--faint);font-size:13px}
+.exp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:1rem}
+.exp-preview{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-top:.85rem;display:none}
+.exp-row{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid #f0f2f5;font-size:12px}
+.exp-row:last-child{border-bottom:none}
+.count-chip{background:var(--navy);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:10px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:var(--radius);max-width:560px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-head{background:var(--navy);color:#fff;padding:1rem 1.25rem;border-radius:var(--radius) var(--radius) 0 0;display:flex;justify-content:space-between;align-items:center}
+.modal-head h3{font-size:15px;font-weight:600}
+.modal-close{background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:1.25rem}
+.step{display:flex;gap:10px;margin-bottom:.85rem}
+.step-n{min-width:22px;height:22px;background:var(--navy);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.step-t{font-size:13px;color:#333;line-height:1.6}
+.step-t b{color:var(--navy)}
+pre.code{background:#1a2433;color:#e2e8f0;padding:.85rem 1rem;border-radius:8px;font-size:11px;line-height:1.7;overflow-x:auto;white-space:pre-wrap;margin-top:8px;font-family:'Courier New',monospace}
+.warn-box{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;padding:.75rem 1rem;font-size:12px;color:var(--amber);line-height:1.6;margin-top:.85rem}
+.loading-overlay{position:fixed;inset:0;background:rgba(15,39,68,.72);z-index:400;align-items:center;justify-content:center;gap:14px;display:none}
+.loading-overlay.open{display:flex;flex-direction:column}
+.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{color:#fff;font-size:14px;font-weight:500}
+.toast{position:fixed;bottom:20px;right:20px;padding:10px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;opacity:0;transition:opacity .25s;pointer-events:none;z-index:500;box-shadow:0 4px 16px rgba(0,0,0,.18)}
+.toast.ok{background:#166534;color:#fff}
+.toast.err{background:#b91c1c;color:#fff}
+.toast.info{background:var(--navy);color:#fff}
+.toast.show{opacity:1}
+.edit-bar{background:#ecfdf5;border:1px solid #6ee7b7;border-radius:var(--radius-sm);padding:8px 14px;font-size:12px;color:#065f46;font-weight:600;display:none;align-items:center;justify-content:space-between;margin-bottom:.85rem}
+.edit-bar.open{display:flex}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Loading…</div>
+</div>
+
+<div class="header">
+  <div>
+    <div class="header-title">ENT Thesis — Data Entry</div>
+    <div class="header-sub">Pediatric Tympanometry Study</div>
+  </div>
+  <div class="header-right">
+    <span class="sync-badge" id="sync-badge">Not connected</span>
+    <span style="font-size:12px;color:#94afc8">Records: <b id="rec-count" style="color:#fff">—</b></span>
+    <span id="status" style="font-size:11px;color:#7dd3fc;margin-left:8px">Idle</span>
+    <button class="help-btn" onclick="openHelp()">Setup Help</button>
+  </div>
+</div>
+
+
+<div class="tab-bar">
+  <button class="tab active" onclick="switchTab('entry')">New Entry</button>
+  <button class="tab" onclick="switchTab('records')">All Records</button>
+  <button class="tab" onclick="switchTab('pending')">Incomplete <span class="tab-badge" id="pend-badge">0</span></button>
+  <button class="tab" onclick="switchTab('export')">Filter &amp; Export</button>
+</div>
+
+<div class="main">
+
+<!-- ═══ NEW ENTRY ═══ -->
+<div id="tab-entry" class="section active">
+
+  <div class="edit-bar" id="edit-bar">
+    <span id="edit-msg">Editing record — changes will update the existing row in Sheets</span>
+    <button class="btn btn-secondary btn-sm" onclick="cancelEdit()">Cancel edit</button>
+  </div>
+
+  <!-- Patient info -->
+  <div class="card">
+    <div class="card-head"><h2>Patient Information</h2></div>
+    <div class="card-body">
+      <div class="grid g7">
+        <div class="field"><label>S. No</label><input type="number" id="f-sno" readonly/></div>
+        <div class="field" style="grid-column:span 2"><label>Name <span class="req">*</span></label><input type="text" id="f-name" placeholder="Full name"/></div>
+        <div class="field"><label>Age <span class="req">*</span></label><input type="number" id="f-age" min="1" max="18" placeholder="yrs"/></div>
+        <div class="field"><label>Sex <span class="req">*</span></label>
+          <select id="f-sex"><option value="">—</option><option value="M">M</option><option value="F">F</option></select>
+        </div>
+        <div class="field" style="grid-column:span 2"><label>Parent's Name</label><input type="text" id="f-parent" placeholder="Father / Guardian"/></div>
+      </div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="field"><label>Parent's Occupation</label><input type="text" id="f-occ" placeholder="e.g. Driver"/></div>
+        <div class="field"><label>Parental Observation</label><input type="text" id="f-pobs" placeholder="e.g. nil significant"/></div>
+        <div class="field"><label>Teacher Observation</label><input type="text" id="f-tobs" placeholder="e.g. frequent URTI"/></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Symptoms -->
+  <div class="card">
+    <div class="card-head"><h2>Symptoms &amp; History</h2></div>
+    <div class="card-body">
+      <div class="grid g5">
+        <div class="field"><label>Ear Discharge</label>
+          <div class="yn" id="yn-discharge"><button class="yn-btn" onclick="setYN('discharge','yes',this)">Yes</button><button class="yn-btn" onclick="setYN('discharge','no',this)">No</button></div>
+        </div>
+        <div class="field"><label>Ear Block</label>
+          <div class="yn" id="yn-block"><button class="yn-btn" onclick="setYN('block','yes',this)">Yes</button><button class="yn-btn" onclick="setYN('block','no',this)">No</button></div>
+        </div>
+        <div class="field"><label>Ear Pain</label>
+          <div class="yn" id="yn-pain"><button class="yn-btn" onclick="setYN('pain','yes',this)">Yes</button><button class="yn-btn" onclick="setYN('pain','no',this)">No</button></div>
+        </div>
+        <div class="field"><label>Recent URTI</label>
+          <div class="yn" id="yn-urti"><button class="yn-btn" onclick="setYN('urti','yes',this)">Yes</button><button class="yn-btn" onclick="setYN('urti','no',this)">No</button></div>
+        </div>
+        <div class="field"><label>Speech Delay / Academic</label>
+          <div class="yn" id="yn-speech"><button class="yn-btn" onclick="setYN('speech','yes',this)">Yes</button><button class="yn-btn" onclick="setYN('speech','no',this)">No</button></div>
+        </div>
+      </div>
+      <div class="grid g2" style="margin-top:10px">
+        <div class="field"><label>Previous Diagnosis</label><input type="text" id="f-pdiag" placeholder="If any, else leave blank"/></div>
+        <div class="field"><label>Previous Surgical History</label><input type="text" id="f-psurg" placeholder="If any, else leave blank"/></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clinical exam -->
+  <div class="card">
+    <div class="card-head"><h2>Clinical Examination</h2></div>
+    <div class="card-body">
+      <div class="ear-cols">
+        <div class="ear-block">
+          <div class="ear-title right">Right Ear</div>
+          <div class="ear-inner">
+            <div class="grid g2" style="gap:8px">
+              <div class="field"><label>External Auditory Canal</label>
+                <select id="f-r-eac">
+                  <option value="">Select</option>
+                  <option>normal</option><option>minimal wax</option><option>impacted wax</option>
+                  <option>discharge present</option><option>narrowed</option><option>nil significant</option>
+                </select>
+              </div>
+              <div class="field"><label>Tympanic Membrane</label>
+                <select id="f-r-tm">
+                  <option value="">Select</option>
+                  <option>intact</option><option>dull</option><option>retracted</option>
+                  <option>congested, intact</option><option>perforated</option>
+                  <option>grommet in situ</option><option>partly seen</option><option>nil significant</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ear-block">
+          <div class="ear-title left">Left Ear</div>
+          <div class="ear-inner">
+            <div class="grid g2" style="gap:8px">
+              <div class="field"><label>External Auditory Canal</label>
+                <select id="f-l-eac">
+                  <option value="">Select</option>
+                  <option>normal</option><option>minimal wax</option><option>impacted wax</option>
+                  <option>discharge present</option><option>narrowed</option><option>nil significant</option>
+                </select>
+              </div>
+              <div class="field"><label>Tympanic Membrane</label>
+                <select id="f-l-tm">
+                  <option value="">Select</option>
+                  <option>intact</option><option>dull</option><option>retracted</option>
+                  <option>congested, intact</option><option>perforated</option>
+                  <option>grommet in situ</option><option>partly seen</option><option>nil significant</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label>Any Other Findings</label>
+        <input type="text" id="f-other" placeholder="e.g. nil, right pinna skin tag, adenoid hypertrophy…"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tympanometry -->
+  <div class="card">
+    <div class="card-head"><h2>Tympanometry Results</h2></div>
+    <div class="card-body">
+      <div class="tymp-wrap">
+        <table class="tymp-table">
+          <thead>
+            <tr>
+              <th style="width:70px">Ear</th>
+              <th style="width:100px">Type</th>
+              <th>Peak Pressure (daPa)</th>
+              <th>Compliance (ml)</th>
+              <th>ECV (ml)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="ear-label-cell right">Right</td>
+              <td><select id="f-r-type" class="type-select"><option value="">—</option><option>A</option><option>As</option><option>Ad</option><option>B</option><option>C</option></select></td>
+              <td><input type="number" id="f-r-pressure" placeholder="e.g. 0"/></td>
+              <td><input type="number" step="0.01" id="f-r-comp" placeholder="e.g. 0.6"/></td>
+              <td><input type="number" step="0.01" id="f-r-ecv" placeholder="e.g. 0.8"/></td>
+            </tr>
+            <tr>
+              <td class="ear-label-cell left">Left</td>
+              <td><select id="f-l-type" class="type-select"><option value="">—</option><option>A</option><option>As</option><option>Ad</option><option>B</option><option>C</option></select></td>
+              <td><input type="number" id="f-l-pressure" placeholder="e.g. 0"/></td>
+              <td><input type="number" step="0.01" id="f-l-comp" placeholder="e.g. 0.6"/></td>
+              <td><input type="number" step="0.01" id="f-l-ecv" placeholder="e.g. 0.8"/></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Impression -->
+  <div class="card">
+    <div class="card-head"><h2>Impression &amp; Recommendation</h2></div>
+    <div class="card-body">
+      <div class="grid g2">
+        <div class="field"><label>Overall Impression / Interpretation</label>
+          <textarea id="f-impression" placeholder="e.g. No indication of middle ear pathologies"></textarea>
+        </div>
+        <div class="field"><label>Recommendation / Follow-up</label>
+          <textarea id="f-recommendation" placeholder="e.g. Reassure / ENT Referral/Follow-up"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save -->
+  <div class="card">
+    <div class="card-body">
+      <div class="actions">
+        <button class="btn btn-primary" onclick="saveRecord()">Save &amp; Sync to Sheets</button>
+        <button class="btn btn-secondary" onclick="clearForm()">Clear Form</button>
+      </div>
+      <div class="form-err" id="form-err"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ ALL RECORDS ═══ -->
+<div id="tab-records" class="section">
+  <div class="card">
+    <div class="card-head">
+      <h2>All Records &nbsp;<span id="all-count" style="color:var(--navy);font-weight:700">0</span></h2>
+      <button class="btn btn-secondary btn-sm" onclick="fetchRecords()">Refresh from Sheets</button>
+    </div>
+    <div class="card-body">
+      <div class="rec-filters">
+        <input type="text" id="s-name" placeholder="Search name…" oninput="renderRecords()" style="flex:1;min-width:130px"/>
+        <select id="s-sex" onchange="renderRecords()"><option value="">All sexes</option><option value="M">Male</option><option value="F">Female</option></select>
+        <select id="s-rt" onchange="renderRecords()"><option value="">Any R type</option><option>A</option><option>As</option><option>Ad</option><option>B</option><option>C</option></select>
+        <select id="s-lt" onchange="renderRecords()"><option value="">Any L type</option><option>A</option><option>As</option><option>Ad</option><option>B</option><option>C</option></select>
+      </div>
+      <div class="rec-list" id="records-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ INCOMPLETE ═══ -->
+<div id="tab-pending" class="section">
+  <div class="card">
+    <div class="card-head">
+      <h2>Incomplete Records &nbsp;<span id="pend-count" style="color:var(--amber);font-weight:700">0</span></h2>
+      <span style="font-size:12px;color:var(--muted)">Click any record to complete it</span>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div class="rec-list" id="pending-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EXPORT ═══ -->
+<div id="tab-export" class="section">
+  <div class="card">
+    <div class="card-head"><h2>Filter &amp; Export</h2></div>
+    <div class="card-body">
+      <div class="exp-grid">
+        <div class="field"><label>Sex</label><select id="e-sex"><option value="">Any</option><option value="M">Male</option><option value="F">Female</option></select></div>
+        <div class="field"><label>Age from (yrs)</label><input type="number" id="e-age-min" placeholder="e.g. 5"/></div>
+        <div class="field"><label>Age to (yrs)</label><input type="number" id="e-age-max" placeholder="e.g. 14"/></div>
+        <div class="field"><label>Right Ear Type</label><select id="e-rt"><option value="">Any</option><option>A</option><option>As</option><option>Ad</option><option>B</option><option>C</option></select></div>
+        <div class="field"><label>Left Ear Type</label><select id="e-lt"><option value="">Any</option><option>A</option><option>As</option><option>Ad</option><option>B</option><option>C</option></select></div>
+        <div class="field"><label>Recent URTI</label><select id="e-urti"><option value="">Any</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+        <div class="field"><label>Speech Delay</label><select id="e-speech"><option value="">Any</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+        <div class="field"><label>Impression contains</label><input type="text" id="e-imp" placeholder="e.g. pathol…"/></div>
+        <div class="field"><label>Recommendation contains</label><input type="text" id="e-rec" placeholder="e.g. Reassure…"/></div>
+        <div class="field"><label>Completeness</label>
+          <select id="e-complete"><option value="">All records</option><option value="yes">Complete only</option><option value="no">Incomplete only</option></select>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="previewExport()">Preview</button>
+        <button class="btn btn-teal" onclick="exportCSV()">Export as CSV</button>
+        <span id="e-count" style="font-size:13px;color:var(--muted)"></span>
+      </div>
+      <div class="exp-preview" id="exp-preview"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- Help modal -->
+<div class="modal-overlay" id="help-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Google Sheets Setup Guide</h3>
+      <button class="modal-close" onclick="closeHelp()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="step"><div class="step-n">1</div><div class="step-t">Open your Google Sheet. Click <b>Extensions &#8594; Apps Script</b>. Delete all existing code in the editor.</div></div>
+      <div class="step"><div class="step-n">2</div><div class="step-t">Click the button below to copy the script code, then paste it into the editor and press <b>Ctrl+S</b>.</div></div>
+      <button class="btn btn-secondary btn-sm" onclick="copyCode()" style="margin-bottom:6px">Copy Apps Script Code</button>
+      <pre class="code" id="code-block"></pre>
+      <div class="step" style="margin-top:12px"><div class="step-n">3</div><div class="step-t">Click <b>Deploy &#8594; New deployment</b>. Set Type = <b>Web app</b>, Execute as = <b>Me</b>, Who has access = <b>Anyone</b>. Click <b>Deploy</b>.</div></div>
+      <div class="step"><div class="step-n">4</div><div class="step-t">Google will ask for authorization — follow the prompts with your Google account. Then copy the <b>Web App URL</b> shown.</div></div>
+      <div class="step"><div class="step-n">5</div><div class="step-t">Paste the URL in the setup bar at the top and click <b>Connect to Sheets</b>. This is saved permanently on this computer — no need to do this again.</div></div>
+      <div class="warn-box">
+        <b>One-time only:</b> Once connected, the URL is saved in the browser. You never need to enter it again on the same computer, even after closing and reopening the file.<br/><br/>
+        <b>Keep the URL private</b> — anyone with it can write to your Sheet.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const HEADERS = [
+  "S. No","Name","Age","Sex","Parent's Name","Parent's Occupation",
+  "Ear Discharge","Ear Block","Ear Pain","Recent URTI","Speech Delay / Academic Difficulty",
+  "Previous Diagnosis (if any)","Previous Surgical History",
+  "Parental Observation","Teacher Observation",
+  "Right Ear - External Auditory Canal","Right Ear - Tympanic Membrane",
+  "Left Ear - External Auditory Canal","Left Ear - Tympanic Membrane",
+  "Any Other Findings",
+  "Right Ear Tympanogram Type (A/As/Ad/B/C)","Right Ear Peak Pressure (daPa)",
+  "Right Ear Compliance (ml)","Right Ear ECV (ml)",
+  "Left Ear Tympanogram Type (A/As/Ad/B/C)","Left Ear Peak Pressure (daPa)",
+  "Left Ear Compliance (ml)","Left Ear ECV (ml)",
+  "Overall Impression / Interpretation","Recommendation / Follow-up"
+];
+
+const APPS_SCRIPT = `// ENT Thesis Sync Script
+// Deploy: Extensions > Apps Script > Deploy > New Deployment
+// Type: Web app | Execute as: Me | Access: Anyone
+
+function doGet(e) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    var data = sheet.getDataRange().getValues();
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: "OK", data: data }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: "ERROR", message: err.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doPost(e) {
+  try {
+    var payload = JSON.parse(e.postData.contents);
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+
+    if (payload.action === "append") {
+      if (sheet.getLastRow() === 0 && payload.headers) {
+        var hr = sheet.getRange(1, 1, 1, payload.headers.length);
+        hr.setValues([payload.headers]);
+        hr.setFontWeight("bold");
+        hr.setBackground("#0f2744");
+        hr.setFontColor("#ffffff");
+        sheet.setFrozenRows(1);
+      }
+      sheet.appendRow(payload.row);
+      sheet.autoResizeColumns(1, payload.row.length);
+      return ok({ action: "append", row: sheet.getLastRow() });
+    }
+
+    if (payload.action === "update") {
+      var rows = sheet.getDataRange().getValues();
+      for (var i = 1; i < rows.length; i++) {
+        if (String(rows[i][0]) === String(payload.sno)) {
+          sheet.getRange(i + 1, 1, 1, payload.row.length).setValues([payload.row]);
+          return ok({ action: "update", sheetRow: i + 1 });
+        }
+      }
+      return err("S. No not found: " + payload.sno);
+    }
+
+    return err("Unknown action");
+  } catch(e) {
+    return err(e.message);
+  }
+}
+
+function ok(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(Object.assign({ status: "OK" }, data)))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+function err(msg) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: "ERROR", message: msg }))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+
+// ---- Configuration ----
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCNRvkNFEq5jWFBgjTQOAytILt_6eXJWcP1AkfwT0VVHPLDDBrEftV_qpIdJdLQYc28A/exec";
+
+
+// ---- State ----
+let records = []; 
+let config = {};
+let yn = {discharge:'',block:'',pain:'',urti:'',speech:''};
+let editingSno = null;
+
+// ---- Init ----
+function init() {
+  document.getElementById('code-block').textContent = APPS_SCRIPT;
+  try { config = JSON.parse(localStorage.getItem('ent_cfg2') || '{}'); } catch(e){ config={}; }
+  document.getElementById('setup-wrap').style.display = 'none';
+  fetchRecords();
+}
+
+
+// ---- Fetch all rows from Sheet ----
+function fetchRecords() {
+  document.getElementById("status").innerText = "Loading records...";
+
+  fetch(SCRIPT_URL)
+    .then(res => res.json())
+    .then(res => {
+      console.log("Data:", res);
+
+      if (res.status === "OK") {
+        records = res.data; // includes header as row 0
+        updateCount();
+        renderRecords();
+        renderPending();
+        setSyncBadge('ok','Connected');
+        setNextSno();
+        showToast('Loaded ' + (records.length - 1) + ' records from Sheets', 'ok');
+        document.getElementById("status").innerText = "Loaded ";
+      } else {
+        document.getElementById("status").innerText = "Error ";
+        setSyncBadge('err','Fetch error');
+        showToast('Could not load from Sheets: ' + res.message, 'err');
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById("status").innerText = "Failed ";
+      setSyncBadge('err','Fetch error');
+      showToast('Could not load from Sheets: ' + err.message, 'err');
+    });
+}
+
+// ---- Row builder (indices match HEADERS exactly) ----
+function buildRow(sno) {
+  return [
+    sno, gv('f-name'), gv('f-age') !== '' ? parseFloat(gv('f-age')) : '', gv('f-sex'),
+    gv('f-parent'), gv('f-occ'),
+    yn.discharge, yn.block, yn.pain, yn.urti, yn.speech,
+    gv('f-pdiag'), gv('f-psurg'),
+    gv('f-pobs'), gv('f-tobs'),
+    gv('f-r-eac'), gv('f-r-tm'),
+    gv('f-l-eac'), gv('f-l-tm'),
+    gv('f-other'),
+    gv('f-r-type'), gv('f-r-pressure') !== '' ? parseFloat(gv('f-r-pressure')) : '', gv('f-r-comp') !== '' ? parseFloat(gv('f-r-comp')) : '', gv('f-r-ecv') !== '' ? parseFloat(gv('f-r-ecv')) : '',
+    gv('f-l-type'), gv('f-l-pressure') !== '' ? parseFloat(gv('f-l-pressure')) : '', gv('f-l-comp') !== '' ? parseFloat(gv('f-l-comp')) : '', gv('f-l-ecv') !== '' ? parseFloat(gv('f-l-ecv')) : '',
+    gv('f-impression'), gv('f-recommendation')
+  ];
+}
+
+// ---- Save / update ----
+function saveRecord() {
+  const name = gv('f-name'), age = gv('f-age'), sex = gv('f-sex');
+  const errEl = document.getElementById('form-err');
+  if (!name || !age || !sex) {
+    errEl.textContent = 'Name, Age, and Sex are required.';
+    errEl.style.display = 'block'; return;
+  }
+  errEl.style.display = 'none';
+
+  const isEdit = editingSno !== null;
+  const sno = isEdit ? editingSno : nextSno();
+  const row = buildRow(sno);
+
+  document.getElementById("status").innerText = "Saving...";
+  
+  const payload = isEdit
+    ? { action: 'update', sno, row }
+    : { action: 'append', row, headers: records.length <= 1 ? HEADERS : null };
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  })
+    .then(res => res.json())
+    .then(res => {
+      console.log("Saved:", res);
+
+      if (res.status === "OK") {
+        document.getElementById("status").innerText = "Saved ";
+        if (isEdit) {
+          const idx = records.findIndex((r,i) => i > 0 && String(r[0]) === String(sno));
+          if (idx > 0) records[idx] = row;
+        } else {
+          records.push(row);
+        }
+        updateCount(); renderRecords(); renderPending();
+        clearForm();
+        setSyncBadge('ok','Connected');
+        showToast('Record #' + sno + (isEdit ? ' updated' : ' saved') + ' in Sheets', 'ok');
+        fetchRecords(); // refresh table
+      } else {
+        document.getElementById("status").innerText = "Error ";
+        setSyncBadge('err','Sync error');
+        showToast('Save failed: ' + res.message, 'err');
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById("status").innerText = "Failed ";
+      setSyncBadge('err','Sync error');
+      showToast('Save failed: ' + err.message, 'err');
+    });
+}
+
+// ── Load record into form ──
+function loadForEdit(sno) {
+  const row = records.find((r,i) => i > 0 && String(r[0]) === String(sno));
+  if (!row) return;
+  editingSno = sno;
+  sv('f-sno',row[0]); sv('f-name',row[1]); sv('f-age',row[2]); sv('f-sex',row[3]);
+  sv('f-parent',row[4]); sv('f-occ',row[5]);
+  setYNValue('discharge',row[6]); setYNValue('block',row[7]);
+  setYNValue('pain',row[8]); setYNValue('urti',row[9]); setYNValue('speech',row[10]);
+  sv('f-pdiag',row[11]); sv('f-psurg',row[12]);
+  sv('f-pobs',row[13]); sv('f-tobs',row[14]);
+  sv('f-r-eac',row[15]); sv('f-r-tm',row[16]);
+  sv('f-l-eac',row[17]); sv('f-l-tm',row[18]);
+  sv('f-other',row[19]);
+  sv('f-r-type',row[20]); sv('f-r-pressure',row[21]); sv('f-r-comp',row[22]); sv('f-r-ecv',row[23]);
+  sv('f-l-type',row[24]); sv('f-l-pressure',row[25]); sv('f-l-comp',row[26]); sv('f-l-ecv',row[27]);
+  sv('f-impression',row[28]); sv('f-recommendation',row[29]);
+  document.getElementById('edit-bar').classList.add('open');
+  document.getElementById('edit-msg').textContent = 'Editing record #' + sno + ' (' + row[1] + ') — save will update the existing row';
+  switchTab('entry');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function cancelEdit() {
+  editingSno = null;
+  document.getElementById('edit-bar').classList.remove('open');
+  clearForm();
+}
+
+function clearForm() {
+  if (editingSno === null) {
+    document.getElementById('edit-bar').classList.remove('open');
+  }
+  editingSno = null;
+  document.getElementById('edit-bar').classList.remove('open');
+  ['f-name','f-age','f-parent','f-occ','f-pobs','f-tobs','f-pdiag','f-psurg','f-other',
+   'f-r-pressure','f-r-comp','f-r-ecv','f-l-pressure','f-l-comp','f-l-ecv',
+   'f-impression','f-recommendation'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
+  ['f-sex','f-r-eac','f-r-tm','f-l-eac','f-l-tm','f-r-type','f-l-type']
+    .forEach(id => { const e=document.getElementById(id); if(e) e.selectedIndex=0; });
+  Object.keys(yn).forEach(k => yn[k]='');
+  document.querySelectorAll('.yn-btn').forEach(b => b.className='yn-btn');
+  document.getElementById('form-err').style.display='none';
+  setNextSno();
+}
+
+function setNextSno() {
+  const n = records.filter((_,i) => i > 0).length + 1;
+  document.getElementById('f-sno').value = n;
+}
+function nextSno() { return records.filter((_,i) => i > 0).length + 1; }
+
+// ── Incomplete check: clinical fields missing ──
+function isIncomplete(row) {
+  return !row[20] || !row[24] || !row[16] || !row[18];
+}
+
+// ── Render records ──
+function renderRecords() {
+  const nq = (document.getElementById('s-name').value||'').toLowerCase();
+  const sf = document.getElementById('s-sex').value;
+  const rf = document.getElementById('s-rt').value;
+  const lf = document.getElementById('s-lt').value;
+  const data = records.filter((_,i) => i>0).filter(r =>
+    (!nq || String(r[1]).toLowerCase().includes(nq))
+    && (!sf || r[3]===sf) && (!rf || r[20]===rf) && (!lf || r[24]===lf)
+  );
+  const total = records.filter((_,i)=>i>0).length;
+  document.getElementById('all-count').textContent = data.length + (data.length!==total?' / '+total:'');
+  const el = document.getElementById('records-list');
+  el.innerHTML = data.length ? data.map(r => rowHTML(r)).join('') : '<div class="empty">No records found</div>';
+}
+
+function renderPending() {
+  const pending = records.filter((_,i) => i>0 && isIncomplete(r => r));
+  // fix: proper filter
+  const pend = records.filter((r,i) => i>0 && isIncomplete(r));
+  document.getElementById('pend-count').textContent = pend.length;
+  document.getElementById('pend-badge').textContent = pend.length;
+  const el = document.getElementById('pending-list');
+  el.innerHTML = pend.length ? pend.map(r => rowHTML(r, true)).join('') : '<div class="empty">No incomplete records — all done!</div>';
+}
+
+function missingFields(row) {
+  const m = [];
+  if (!row[16]) m.push('R-TM'); if (!row[18]) m.push('L-TM');
+  if (!row[20]) m.push('R-Type'); if (!row[24]) m.push('L-Type');
+  if (!row[28]) m.push('Impression'); if (!row[29]) m.push('Recommendation');
+  return m;
+}
+
+function badgeClass(t) {
+  if (!t) return 'bNa';
+  if (t==='B') return 'bB'; if (t==='C') return 'bC';
+  if (t==='As'||t==='Ad') return 'bAs'; return 'bA';
+}
+
+function rowHTML(r, showMissing) {
+  const inc = isIncomplete(r);
+  const miss = showMissing ? missingFields(r) : [];
+  return `<div class="rec-row" onclick="loadForEdit(${r[0]})">
+    <div class="rec-no">${r[0]}</div>
+    <div>
+      <div class="rec-name">${r[1]||'—'}</div>
+      <div class="rec-meta">${r[2]||'?'}y &middot; ${r[3]==='M'?'Male':'Female'}${r[4]?' &middot; '+r[4]:''}${miss.length?' &nbsp;<span style="color:var(--amber);font-weight:700">Missing: '+miss.join(', ')+'</span>':''}</div>
+    </div>
+    <div class="badges">
+      ${inc?'<span class="badge bInc">Incomplete</span>':''}
+      <span class="badge ${badgeClass(r[20])}">${r[20]?'R:'+r[20]:'R:—'}</span>
+      <span class="badge ${badgeClass(r[24])}">${r[24]?'L:'+r[24]:'L:—'}</span>
+    </div>
+  </div>`;
+}
+
+// ── Export ──
+function getFiltered() {
+  const sex=document.getElementById('e-sex').value;
+  const aMin=parseInt(document.getElementById('e-age-min').value)||0;
+  const aMax=parseInt(document.getElementById('e-age-max').value)||999;
+  const rt=document.getElementById('e-rt').value;
+  const lt=document.getElementById('e-lt').value;
+  const urti=document.getElementById('e-urti').value;
+  const sp=document.getElementById('e-speech').value;
+  const imp=(document.getElementById('e-imp').value||'').toLowerCase();
+  const rec=(document.getElementById('e-rec').value||'').toLowerCase();
+  const comp=document.getElementById('e-complete').value;
+  return records.filter((r,i) => {
+    if(i===0) return false;
+    const age=parseFloat(r[2])||0;
+    if(comp==='yes'&&isIncomplete(r)) return false;
+    if(comp==='no'&&!isIncomplete(r)) return false;
+    return (!sex||r[3]===sex)&&age>=aMin&&age<=aMax
+      &&(!rt||r[20]===rt)&&(!lt||r[24]===lt)
+      &&(!urti||String(r[9]).toLowerCase()===urti)
+      &&(!sp||String(r[10]).toLowerCase()===sp)
+      &&(!imp||String(r[28]).toLowerCase().includes(imp))
+      &&(!rec||String(r[29]).toLowerCase().includes(rec));
+  });
+}
+
+function previewExport() {
+  const f=getFiltered();
+  document.getElementById('e-count').innerHTML='<span class="count-chip">'+f.length+'</span> records match';
+  const el=document.getElementById('exp-preview');
+  el.style.display='block';
+  if(!f.length){el.innerHTML='<div class="empty">No records match.</div>';return;}
+  el.innerHTML='<div style="padding:6px 12px;font-size:11px;font-weight:700;color:var(--muted);background:#f8fafc;border-bottom:1px solid var(--border)">First 5 matches</div>'
+    +f.slice(0,5).map(r=>`<div class="exp-row"><span><b>#${r[0]} ${r[1]}</b> <span style="color:var(--muted)">${r[2]}y ${r[3]}</span></span><div class="badges"><span class="badge ${badgeClass(r[20])}">${r[20]?'R:'+r[20]:'R:—'}</span><span class="badge ${badgeClass(r[24])}">${r[24]?'L:'+r[24]:'L:—'}</span></div></div>`).join('');
+}
+
+function exportCSV() {
+  const f=getFiltered();
+  if(!f.length){showToast('No records match filters','err');return;}
+  const csv=[HEADERS,...f].map(r=>r.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='ENT_Thesis_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  showToast('Exported '+f.length+' records','ok');
+}
+
+// ── Helpers ──
+function gv(id){const e=document.getElementById(id);return e?e.value.trim():'';}
+function sv(id,val){const e=document.getElementById(id);if(!e)return;e.value=val==null?'':val;}
+function setYN(field,val,btn){
+  yn[field]=val;
+  document.getElementById('yn-'+field).querySelectorAll('.yn-btn').forEach(b=>b.className='yn-btn');
+  btn.className='yn-btn '+(val==='yes'?'y':'n');
+}
+function setYNValue(field,val){
+  const v=String(val||'').toLowerCase();
+  yn[field]=v;
+  const grp=document.getElementById('yn-'+field);
+  if(!grp)return;
+  grp.querySelectorAll('.yn-btn').forEach(b=>{
+    const bv=b.textContent.trim().toLowerCase()==='yes'?'yes':'no';
+    b.className='yn-btn'+(bv===v?(v==='yes'?' y':' n'):'');
+  });
+}
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelector(`.tab[onclick*="'${tab}'"]`).classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='records')renderRecords();
+  if(tab==='pending')renderPending();
+}
+function updateCount(){document.getElementById('rec-count').textContent=Math.max(0,records.length-1);}
+function setSyncBadge(type,text){const b=document.getElementById('sync-badge');b.className='sync-badge '+type;b.textContent=text;}
+function showLoading(msg){document.getElementById('loading-text').textContent=msg;document.getElementById('loading-overlay').classList.add('open');}
+function hideLoading(){document.getElementById('loading-overlay').classList.remove('open');}
+function openHelp(){document.getElementById('help-modal').classList.add('open');}
+function closeHelp(){document.getElementById('help-modal').classList.remove('open');}
+function copyCode(){navigator.clipboard.writeText(APPS_SCRIPT).then(()=>showToast('Code copied!','ok')).catch(()=>showToast('Copy failed','err'));}
+function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast '+type,3200);}
+
+window.onload = function() {
+  fetchRecords();
+};
+</script>
+</body>
+</html>

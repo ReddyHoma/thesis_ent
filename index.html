@@ -463,19 +463,53 @@ function doGet(e) {
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
     var data = sheet.getDataRange().getValues();
-    return ContentService
-      .createTextOutput(JSON.stringify({ status: "OK", data: data }))
-      .setMimeType(ContentService.MimeType.JSON);
+    
+    // Handle JSONP callback
+    var callback = e.parameter.callback;
+    var jsonData = JSON.stringify({ status: "OK", data: data });
+    
+    if (callback) {
+      // JSONP response
+      return ContentService
+        .createTextOutput(callback + "(" + jsonData + ")")
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    } else {
+      // Regular JSON response
+      return ContentService
+        .createTextOutput(jsonData)
+        .setMimeType(ContentService.MimeType.JSON);
+    }
   } catch(err) {
+    var errorData = JSON.stringify({ status: "ERROR", message: err.message });
+    if (e.parameter.callback) {
+      return ContentService
+        .createTextOutput(e.parameter.callback + "(" + errorData + ")")
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
     return ContentService
-      .createTextOutput(JSON.stringify({ status: "ERROR", message: err.message }))
+      .createTextOutput(errorData)
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
 function doPost(e) {
+  // This won't be used anymore, but keep for backward compatibility
+  return handleRequest(e);
+}
+
+function doGet(e) {
+  // Check if this is a data submission (has 'data' parameter)
+  if (e.parameter.data) {
+    return handleRequest(e);
+  }
+  
+  // Otherwise, it's a data fetch request
+  return fetchDataRequest(e);
+}
+
+function handleRequest(e) {
   try {
-    var payload = JSON.parse(e.postData.contents);
+    var payload = JSON.parse(e.parameter.data);
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
 
     if (payload.action === "append") {
@@ -509,6 +543,35 @@ function doPost(e) {
   }
 }
 
+function fetchDataRequest(e) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    var data = sheet.getDataRange().getValues();
+    var callback = e.parameter.callback;
+    var jsonData = JSON.stringify({ status: "OK", data: data });
+    
+    if (callback) {
+      return ContentService
+        .createTextOutput(callback + "(" + jsonData + ")")
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    } else {
+      return ContentService
+        .createTextOutput(jsonData)
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  } catch(err) {
+    var errorData = JSON.stringify({ status: "ERROR", message: err.message });
+    if (e.parameter.callback) {
+      return ContentService
+        .createTextOutput(e.parameter.callback + "(" + errorData + ")")
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+    return ContentService
+      .createTextOutput(errorData)
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
 function ok(data) {
   return ContentService
     .createTextOutput(JSON.stringify(Object.assign({ status: "OK" }, data)))
@@ -521,7 +584,7 @@ function err(msg) {
 }`;
 
 // ---- Configuration ----
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCNRvkNFEq5jWFBgjTQOAytILt_6eXJWcP1AkfwT0VVHPLDDBrEftV_qpIdJdLQYc28A/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwHSVRYc0J-vB6vX0o74mnMb5GqsdNitdUvfFE9TTbU3Ic5MsXALFwSqLtpBNPGIXieSg/exec";
 
 
 // ---- State ----

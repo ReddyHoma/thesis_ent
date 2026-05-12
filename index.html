@@ -714,7 +714,7 @@ function saveRecord() {
     : { action: 'append', row, headers: records.length <= 1 ? HEADERS : null };
 
   callScript(payload, sno, isEdit, row);
-
+}
 // ── Load record into form ──
 function loadForEdit(sno) {
   const row = records.find((r,i) => i > 0 && String(r[0]) === String(sno));

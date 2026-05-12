@@ -913,7 +913,11 @@ function copyCode(){navigator.clipboard.writeText(APPS_SCRIPT).then(()=>showToas
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast '+type,3200);}
 
 window.onload = function() {
+  console.log("onload fired");
+  console.log("SCRIPT_URL =", SCRIPT_URL);
   fetchRecords();
+  console.log("fetchRecords called");
+
 };
 </script>
 </body>
